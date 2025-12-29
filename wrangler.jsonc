@@ -10,7 +10,22 @@
 			"database_id": "11018cd0-ba4c-4d24-bbc4-5d6a508041e7",
 			"remote": true
 		}
-	]
+	],
+	"observability": {
+		"enabled": false,
+		"head_sampling_rate": 1,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true,
+			"invocation_logs": true
+		},
+		"traces": {
+			"enabled": false,
+			"persist": true,
+			"head_sampling_rate": 1
+		}
+	}
 	// "compatibility_flags": [
 	//   "nodejs_compat"
 	// ],
