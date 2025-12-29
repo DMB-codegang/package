@@ -56,7 +56,7 @@ app.all('*', (c) => {
   `)
 })
 
-app.get('/', (c) => {
+app.get('/api/hello', (c) => {
   return c.json({ message: 'Hello Hono!' })
 })
 
