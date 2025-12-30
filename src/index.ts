@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS packages (
     carrier VARCHAR(50),                         -- 快递公司（顺丰、圆通等）
     
     -- 收件人信息（酒店客人）
-    guest_name VARCHAR(100) NOT NULL,            -- 客人姓名
+    guest_name VARCHAR(100),            -- 客人姓名
     room_number VARCHAR(10),                     -- 房号
     guest_phone VARCHAR(11),                     -- 客人电话尾号
     
