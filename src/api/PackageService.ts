@@ -7,7 +7,7 @@ import { z } from 'zod'
 const packageCheckInSchema = z.object({
     tracking_number: z.string().min(1, "Tracking number is required"),
     carrier: z.string().min(1, "Carrier is required"),
-    guest_name: z.string().default("无名"),
+    guest_name: z.string().optional(),
     room_number: z.string().optional(),
     guest_phone: z.string().optional(),
     received_by: z.string().min(1, "Received by is required"),
@@ -63,7 +63,7 @@ export class PackageService {
                     '已接收', ?, ?
                 )
                 `).bind(
-                    body.tracking_number, body.carrier, body.guest_name, body.room_number || null, body.guest_phone || null, body.received_by, body.notes || null
+                    body.tracking_number, body.carrier, body.guest_name || null, body.room_number || null, body.guest_phone || null, body.received_by, body.notes || null
                 ).run()
 
                 // 返回成功响应
