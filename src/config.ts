@@ -1,4 +1,4 @@
 
 export const config = {
-    password: '123456'
+    rootToken: '123456'
 }

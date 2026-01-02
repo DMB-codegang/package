@@ -3,6 +3,21 @@ import { Bindings } from '../index'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 
+import { config } from '../config'
+
+// 快递查询接口参数校验
+const packageSearchSchema = z.object({
+    tracking_number: z.string().optional(),
+    carrier: z.string().optional(),
+    guest_name: z.string().optional(),
+    room_number: z.string().optional(),
+    guest_phone: z.string().optional(),
+    status: z.string().optional(),
+    received_by: z.string().optional(),
+    picked_up_by: z.string().optional(),
+
+})
+
 // 快递入库接口参数校验
 const packageCheckInSchema = z.object({
     tracking_number: z.string().min(1, "Tracking number is required"),
@@ -27,11 +42,19 @@ const packageCheckOutSchema = z.object({
     notes: z.string().optional(),
 })
 
+// 快递删除接口参数校验
+const packageRemoveSchema = z.object({
+    tracking_number: z.string().min(1, "Tracking number is required"),
+    token: z.string().min(1, "Token is required"),
+})
+
 export class PackageService {
     static register(app: Hono<{ Bindings: Bindings }>) {
-        app.get('/api/packages/search', (c) => this.searchPackage(c))
+        app.get('/api/packages/search',zValidator('query', packageSearchSchema), (c) => this.searchPackage(c))
 
         app.get('/api/packages/getlist', (c) => this.getPackageList(c))
+
+        app.post(`/api/packages/removePackage`, zValidator('json', packageRemoveSchema), (c) => this.removePackage(c, c.req.valid('json')))
 
         app.post('/api/packages/checkin', zValidator('json', packageCheckInSchema), async (c) => {
             try {
@@ -136,6 +159,14 @@ export class PackageService {
             sql += ` AND status = ?`
             params.push(query.status)
         }
+        if (query.received_by) {
+            sql += ` AND received_by LIKE ?`
+            params.push(`%${query.received_by}%`)
+        }
+        if (query.picked_up_by) {
+            sql += ` AND picked_up_by LIKE ?`
+            params.push(`%${query.picked_up_by}%`)
+        }
 
         // 执行查询
         const packages = await c.env.packageData.prepare(sql).bind(...params).run()
@@ -147,6 +178,38 @@ export class PackageService {
             SELECT * FROM packages
         `).run()
         return c.json(packages.results)
+    }
+
+    private static async removePackage(c: Context<{ Bindings: Bindings }>, body: {
+        tracking_number: string,
+        token: string
+    }) {
+
+        if(body.token !== config.rootToken) {
+            return c.json({
+                success: false,
+                error: 'Unauthorized',
+                details: 'Invalid token'
+            }, 401);
+        }
+
+        try {
+            // 执行删除操作
+            await c.env.packageData.prepare(`
+                DELETE FROM packages WHERE tracking_number = ?
+            `).bind(body.tracking_number).run()
+            
+            return c.json({
+                success: true,
+                message: 'Package removed successfully'
+            })
+        } catch (error) {
+            return c.json({
+                success: false,
+                error: 'Internal server error',
+                details: error instanceof Error ? error.message : 'Unknown error'
+            }, 500);
+        }
     }
 
     private static async updatePackage(c: Context<{ Bindings: Bindings }>, updates: {
@@ -187,5 +250,4 @@ export class PackageService {
                     data: updates
                 })
     }
-
 }
